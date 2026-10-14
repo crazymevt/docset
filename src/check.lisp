@@ -1,6 +1,6 @@
-;;;; check.lisp — checks a docset against docs/docset-format.md.
+;;;; check.lisp — checks a docset against docs/format.md.
 
-(in-package #:spec-docset)
+(in-package #:docset)
 
 (defparameter *block-types* '(:p :heading :code-block :syntax :list :table :quote))
 

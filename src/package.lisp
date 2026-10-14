@@ -1,6 +1,6 @@
 ;;;; package.lisp
 
-(defpackage #:spec-docset
+(defpackage #:docset
   (:use #:cl)
   (:export
    ;; Writing
@@ -11,14 +11,14 @@
    #:docset-entry #:entry-record #:find-records
    #:record-id #:record-names #:record-kind #:record-kind-name #:record-package
    #:record-parent #:record-summary
-   #:find-docsets #:*docset-directories* #:*library-systems*
+   #:find-docsets #:*docset-directories* #:*library-systems* #:user-docset-directory
    #:lookup-symbol #:search-names
    ;; Entries
    #:entry-id #:entry-names #:entry-kind-name #:entry-sections #:entry-section
    ;; Checking
    #:check-docset))
 
-(defpackage #:spec-docset.data
+(defpackage #:docset.data
   (:use)
   (:import-from #:cl #:nil #:t)
   (:documentation "The package docset data is read in: NIL and T are Lisp's, and any

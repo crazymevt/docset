@@ -1,9 +1,9 @@
-;;;; docset.lisp — writes and reads docsets (see docs/docset-format.md).
+;;;; docset.lisp — writes and reads docsets (see docs/format.md).
 ;;;;
-;;;; Plain Common Lisp with no dependencies, so the app, Cadre and the
-;;;; generators of other libraries can all use or copy it.
+;;;; Plain Common Lisp with no dependencies, so the spec browser, Cadre and
+;;;; the generators of docsets can all share it.
 
-(in-package #:spec-docset)
+(in-package #:docset)
 
 ;;; Printing and reading data
 
@@ -18,7 +18,7 @@
   "Reads one form of docset data, with stray symbols kept out of real packages."
   (with-standard-io-syntax
     (let ((*read-eval* nil)
-          (*package* (find-package '#:spec-docset.data)))
+          (*package* (find-package '#:docset.data)))
       (read stream eof-error-p nil))))
 
 (defun data-file (directory name)
@@ -110,6 +110,8 @@ ENTRIES is a plist starting (:entry \"id\" ...) as docs/docset-format.md describ
       (setf (gethash (record-id record) (docset-by-id docset)) record)
       (dolist (name (record-names record))
         (push record (gethash (string-downcase name) (docset-by-name docset)))))
+    (maphash (lambda (name records) (setf (gethash name (docset-by-name docset)) (nreverse records)))
+             (docset-by-name docset))
     docset))
 
 (defun entry-record (docset id)
@@ -142,6 +144,15 @@ ENTRIES is a plist starting (:entry \"id\" ...) as docs/docset-format.md describ
 (defvar *library-systems* '("gtk4" "raylib")
   "ASDF systems whose docs/docset/ FIND-DOCSETS looks for, when ASDF can find them.")
 
+(defun user-docset-directory ()
+  "Where generated docsets of libraries go, each in its own subdirectory:
+$XDG_DATA_HOME/docsets/, or ~/.local/share/docsets/."
+  (let ((xdg #+sbcl (sb-ext:posix-getenv "XDG_DATA_HOME") #-sbcl nil))
+    (merge-pathnames "docsets/"
+                     (if (and xdg (plusp (length xdg)))
+                         (uiop-free-directory xdg)
+                         (merge-pathnames ".local/share/" (user-homedir-pathname))))))
+
 (defun library-docset-directory (system-name)
   (let* ((asdf (find-package :asdf))
          (find-system (and asdf (find-symbol "FIND-SYSTEM" asdf)))
@@ -151,19 +162,23 @@ ENTRIES is a plist starting (:entry \"id\" ...) as docs/docset-format.md describ
       (let ((dir (merge-pathnames "docs/docset/" (funcall source-directory system))))
         (when (probe-file (data-file dir "manifest.sexp")) dir)))))
 
-(defun find-docsets (&key (directories *docset-directories*) (systems *library-systems*))
-  "Opens every docset found in DIRECTORIES and in the docs/docset/ of SYSTEMS."
+(defun find-docsets (&key (directories *docset-directories*) (systems *library-systems*) (user t))
+  "Opens every docset found in DIRECTORIES, in the docs/docset/ of SYSTEMS and,
+when USER, in USER-DOCSET-DIRECTORY. A docset id found twice is opened once."
   (let ((found '()))
-    (dolist (dir directories)
+    (dolist (dir (append directories (when user (list (user-docset-directory)))))
       (dolist (sub (directory (merge-pathnames "*/manifest.sexp" (uiop-free-directory dir))))
         (push (make-pathname :name nil :type nil :defaults sub) found)))
     (dolist (system systems)
       (let ((dir (library-docset-directory system)))
         (when dir (push dir found))))
-    (loop for dir in (nreverse found)
-          for docset = (handler-case (open-docset dir)
-                         (error (e) (warn "Skipping docset ~A: ~A" dir e) nil))
-          when docset collect docset)))
+    (let ((ids '()))
+      (loop for dir in (nreverse found)
+            for docset = (handler-case (open-docset dir)
+                           (error (e) (warn "Skipping docset ~A: ~A" dir e) nil))
+            when (and docset (not (member (docset-id docset) ids :test #'equal)))
+              do (push (docset-id docset) ids)
+              and collect docset))))
 
 ;;; Looking things up
 
@@ -173,13 +188,15 @@ ENTRIES is a plist starting (:entry \"id\" ...) as docs/docset-format.md describ
 
 (defun lookup-symbol (docsets name package)
   "Records documenting the symbol NAME of the package named PACKAGE (a string,
-or a package), across DOCSETS. Entries with no package match any package."
-  (let ((package-name (if (packagep package) (package-name package) (string package))))
-    (loop for docset in docsets
-          append (loop for record in (find-records docset name)
-                       when (or (null (record-package record))
-                                (string-equal package-name (record-package record)))
-                         collect (cons docset record)))))
+or a package), across DOCSETS, as (docset . record): entries for the symbol
+itself first, then entries with no package (glossary terms)."
+  (let ((package-name (if (packagep package) (package-name package) (string package)))
+        (symbols '()) (others '()))
+    (dolist (docset docsets)
+      (dolist (record (find-records docset name))
+        (cond ((null (record-package record)) (push (cons docset record) others))
+              ((string-equal package-name (record-package record)) (push (cons docset record) symbols)))))
+    (append (nreverse symbols) (nreverse others))))
 
 (defun search-names (docset query &key (limit 50))
   "Records whose names contain QUERY: names starting with it first, then shorter names first."
