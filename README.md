@@ -7,12 +7,12 @@ program can show it without parsing HTML. The format is in
 
 The library is plain Common Lisp with no dependencies. It is shared by:
 
-- **spec-browser**, which shows docsets in a window and makes the Common Lisp
+- **[spec-browser](https://github.com/crazymevt/spec-browser)**, which shows docsets in a window and makes the Common Lisp
   docset from the dpANS3 sources;
 - **[Cadre](https://github.com/crazymevt/cadre-editor)**, whose HyperSpec tab
   shows them beside the code;
 - the generators that write them: [gtk4](https://github.com/crazymevt/gtk4)'s
-  and raylib's own, and the [docsets](https://github.com/crazymevt/docsets)
+  and [raylib](https://github.com/crazymevt/raylib)'s own, and the [docsets](https://github.com/crazymevt/docsets)
   project for libraries such as bordeaux-threads.
 
 ## Installing
