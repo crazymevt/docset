@@ -43,6 +43,8 @@ One plist:
  :system "gtk4"                    ; the ASDF system documented, if any
  :packages ("GTK" "GDK" ...)       ; packages whose symbols the entries document
  :nicknames (("BORDEAUX-THREADS" "BT") ...)  ; optional: other names code uses for them
+ :release "dexador-20260101-git"   ; optional: the library release it was made from
+ :generator "6f17c0d160b65826"     ; optional: a fingerprint of what generated it
  :source "https://..."             ; where the text comes from
  :attribution "..."                ; shown in the browser's About box
  :license "..."
