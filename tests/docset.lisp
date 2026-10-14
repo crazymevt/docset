@@ -20,7 +20,7 @@
                                 (uiop:temporary-directory)))
          (dir (merge-pathnames "frobs/" root)))
     (unwind-protect
-         (progn (docset:write-docset dir '(:id "frobs" :title "Frobs" :packages ("FROBS")
+         (progn (docset:write-docset dir '(:id "frobs" :title "Frobs" :packages ("FROBS") :nicknames (("FROBS" "FR"))
                                            :toc ((:title "Frob" :entry "function/frob")))
                                      *entries*)
                 (funcall function dir root))
@@ -49,6 +49,8 @@
        ;; The symbol's own entry before the glossary term, whatever the case
        (is equal '("function/frob" "glossary/frob")
            (mapcar (lambda (hit) (docset:record-id (cdr hit))) (docset:lookup-symbol (list d) "FROB" "frobs")))
+       (is equal '("function/frob" "glossary/frob")
+           (mapcar (lambda (hit) (docset:record-id (cdr hit))) (docset:lookup-symbol (list d) "frob" "fr")))
        (is equal '("glossary/frob")
            (mapcar (lambda (hit) (docset:record-id (cdr hit))) (docset:lookup-symbol (list d) "frob" "OTHER")))
        (is equal '("*frob*") (docset:record-names (first (docset:search-names d "*fr"))))))))

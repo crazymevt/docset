@@ -42,6 +42,7 @@ One plist:
  :version "1.0.2"
  :system "gtk4"                    ; the ASDF system documented, if any
  :packages ("GTK" "GDK" ...)       ; packages whose symbols the entries document
+ :nicknames (("BORDEAUX-THREADS" "BT") ...)  ; optional: other names code uses for them
  :source "https://..."             ; where the text comes from
  :attribution "..."                ; shown in the browser's About box
  :license "..."

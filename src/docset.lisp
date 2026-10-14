@@ -186,16 +186,25 @@ when USER, in USER-DOCSET-DIRECTORY. A docset id found twice is opened once."
   "The index records of DOCSET's entries named NAME, in any case."
   (gethash (string-downcase name) (docset-by-name docset)))
 
+(defun docset-package-name (docset name)
+  "The package name DOCSET's records use for NAME, which may be one of the
+nicknames its manifest lists."
+  (or (loop for (package . nicknames) in (getf (docset-manifest docset) :nicknames)
+            when (or (string-equal name package) (member name nicknames :test #'string-equal))
+              return package)
+      name))
+
 (defun lookup-symbol (docsets name package)
   "Records documenting the symbol NAME of the package named PACKAGE (a string,
-or a package), across DOCSETS, as (docset . record): entries for the symbol
-itself first, then entries with no package (glossary terms)."
+or a package; a nickname will do), across DOCSETS, as (docset . record):
+entries for the symbol itself first, then entries with no package (glossary terms)."
   (let ((package-name (if (packagep package) (package-name package) (string package)))
         (symbols '()) (others '()))
     (dolist (docset docsets)
-      (dolist (record (find-records docset name))
-        (cond ((null (record-package record)) (push (cons docset record) others))
-              ((string-equal package-name (record-package record)) (push (cons docset record) symbols)))))
+      (let ((package-name (docset-package-name docset package-name)))
+        (dolist (record (find-records docset name))
+          (cond ((null (record-package record)) (push (cons docset record) others))
+                ((string-equal package-name (record-package record)) (push (cons docset record) symbols))))))
     (append (nreverse symbols) (nreverse others))))
 
 (defun search-names (docset query &key (limit 50))

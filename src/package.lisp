@@ -7,7 +7,7 @@
    #:write-docset
    ;; Reading
    #:docset #:open-docset #:docset-directory #:docset-manifest #:docset-index
-   #:docset-id #:docset-title #:docset-packages #:docset-toc
+   #:docset-id #:docset-title #:docset-packages #:docset-package-name #:docset-toc
    #:docset-entry #:entry-record #:find-records
    #:record-id #:record-names #:record-kind #:record-kind-name #:record-package
    #:record-parent #:record-summary
